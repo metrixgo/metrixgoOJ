@@ -3,12 +3,14 @@ services:
 
   oj-redis:
     image: redis:4.0-alpine
+    container_name: oj-redis
     restart: always
     volumes:
       - ./data/redis:/data
-
+  
   oj-postgres:
-    image: postgres:10-alpine
+    image: registry.cn-hangzhou.aliyuncs.com/eleven_hunt_one/oj_postgres_secondary_development:v1
+    container_name: oj-postgres
     restart: always
     volumes:
       - ./data/postgres:/var/lib/postgresql/data
@@ -17,38 +19,43 @@ services:
       - POSTGRES_USER=onlinejudge
       - POSTGRES_PASSWORD=onlinejudge
 
-  oj-judge:
-    image: registry.cn-hongkong.aliyuncs.com/oj-image/judge:1.6.1
+  judge-server:
+    image: registry.cn-hangzhou.aliyuncs.com/eleven_hunt_one/judge_server_secondary_development:v1
+    container_name: judge-server
     restart: always
-    read_only: true
-    cap_drop:
-      - SETPCAP
-      - MKNOD
-      - NET_BIND_SERVICE
-      - SYS_CHROOT
-      - SETFCAP
-      - FSETID
+    read_only: false
+#    cap_drop:
+#      - SETPCAP
+#      - MKNOD
+#      - NET_BIND_SERVICE
+#      - SYS_CHROOT
+#      - SETFCAP
+#      - FSETID
     tmpfs:
       - /tmp
     volumes:
-      - ./data/backend/test_case:/test_case:ro
+      - ./data/backend/test_case:/test_case
       - ./data/judge_server/log:/log
       - ./data/judge_server/run:/judger
     environment:
-      - SERVICE_URL=http://oj-judge:8080
+      - SERVICE_URL=http://judge-server:8080
       - BACKEND_URL=http://oj-backend:8000/api/judge_server_heartbeat/
       - TOKEN=CHANGE_THIS
       # - judger_debug=1
-
+#    ports:
+#      - "0.0.0.0:2334:8080"
+  
   oj-backend:
-    image: registry.cn-hongkong.aliyuncs.com/oj-image/backend:1.6.1
+#     image: registry.cn-hangzhou.aliyuncs.com/onlinejudge/oj_backend
+    image: registry.cn-hangzhou.aliyuncs.com/eleven_hunt_one/oj_backend_secondary_development:v2
+    container_name: oj-backend
     restart: always
     depends_on:
       - oj-redis
       - oj-postgres
-      - oj-judge
+      - judge-server
     volumes:
-      - ./data/backend:/data
+      - $PWD/data/backend:/data
     environment:
       - POSTGRES_DB=onlinejudge
       - POSTGRES_USER=onlinejudge
