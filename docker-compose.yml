@@ -34,6 +34,7 @@ services:
       - ./data/backend/test_case:/test_case:ro
       - ./data/judge_server/log:/log
       - ./data/judge_server/run:/judger
+      -/data/OnlineJudgeDeploy/data/backend/dist:/app/dist 
     environment:
       - SERVICE_URL=http://oj-judge:8080
       - BACKEND_URL=http://oj-backend:8000/api/judge_server_heartbeat/
